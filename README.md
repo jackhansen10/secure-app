@@ -185,6 +185,23 @@ semgrep --config=p/dockerfile .
 docker build --no-cache -f Dockerfile .
 ```
 
+**Trivy scan fails with "Cannot connect to Docker daemon":**
+```bash
+# Start Docker Desktop
+open -a Docker
+
+# Wait for Docker to start, then verify
+docker ps
+
+# Build images before scanning
+cd app
+docker build -f Dockerfile -t secure-app:latest .
+docker build -f Dockerfile.vulnerable -t vulnerable-app:latest .
+
+# Now Trivy will work
+trivy image secure-app:latest
+```
+
 **Conftest policy errors:**
 ```bash
 # Validate Rego syntax
