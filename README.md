@@ -130,15 +130,18 @@ rm kubesec
 
 ### Static Analysis
 ```bash
-# Install Semgrep (macOS)
+# Install Semgrep (macOS) - RECOMMENDED
 brew install semgrep
 
-# Or install via pip
+# Alternative: Install via pip (requires Python)
 pip install semgrep
 
 # Run security rules
 semgrep --config=p/security-audit .
 semgrep --config=p/dockerfile .
+
+# Test installation
+semgrep --version
 ```
 
 ## 🛠️ Hands-On Exercises
