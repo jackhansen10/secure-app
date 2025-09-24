@@ -48,6 +48,7 @@ jobs:
       run: |
         curl -sSfL https://github.com/controlplaneio/kubesec/releases/download/v2.11.5/kubesec_linux_amd64.tar.gz | tar -xz
         sudo mv kubesec /usr/local/bin/
+        echo "Kubesec installed successfully"
         
     - name: Run Kubesec on Kubernetes manifests
       run: |
@@ -62,6 +63,7 @@ jobs:
       run: |
         curl -sSfL https://github.com/open-policy-agent/conftest/releases/download/v0.50.0/conftest_0.50.0_Linux_x86_64.tar.gz | tar -xz
         sudo mv conftest /usr/local/bin/
+        echo "Conftest installed successfully"
         
     - name: Run Conftest policy validation
       run: |
