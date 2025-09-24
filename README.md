@@ -1,569 +1,284 @@
-# SecureApp DevSecOps Project
+# Kubesec
 
-A hands-on learning project for container security, Kubernetes hardening, and DevSecOps practices using free tools and GitHub Actions.
+[![Testing Workflow][testing_workflow_badge]][testing_workflow_badge]
+[![Security Analysis Workflow][security_workflow_badge]][security_workflow_badge]
+[![Release Workflow][release_workflow_badge]][release_workflow_badge]
 
-## 🎯 What You'll Learn
+[![Go Report Card][goreportcard_badge]][goreportcard]
+[![PkgGoDev][go_dev_badge]][go_dev]
 
-- **Container Security**: Dockerfile best practices, vulnerability scanning, image hardening
-- **Kubernetes Security**: RBAC, Network Policies, Pod Security Standards, admission controllers
-- **DevSecOps Pipeline**: Shift-left security, automated scanning, policy as code
-- **Security Tools**: Trivy, Semgrep, Kubesec, OPA, TruffleHog
+<!-- markdownlint-disable no-inline-html header-increment -->
+<!-- markdownlint-disable line-length -->
 
-## 🚀 Features
+#### <center>🚨 v1 API is deprecated, please read the <a href="https://github.com/controlplaneio/kubesec/blob/master/README.md#release-notes" target="_blank">release notes</a> 🚨</center>
 
-- ✅ Automated security scanning on every PR
-- ✅ Container vulnerability detection
-- ✅ Secret leak prevention
-- ✅ Kubernetes manifest security validation
-- ✅ Policy as code enforcement
-- ✅ Secure and vulnerable examples for comparison
-- ✅ Complete CI/CD pipeline with security gates
+<!-- markdownlint-enable line-length -->
 
-## 🛠 Tech Stack
+### Security risk analysis for Kubernetes resources
 
-**Application:**
-- Node.js/Express (simple web app)
-- Docker (containerization)
+<p align="center">
+  <img src="https://casual-hosting.s3.amazonaws.com/kubesec-logo.png">
+</p>
 
-**Security Tools (All Free):**
-- [Trivy](https://trivy.dev/) - Vulnerability scanner
-- [Semgrep](https://semgrep.dev/) - Static analysis
-- [TruffleHog](https://trufflesecurity.com/trufflehog) - Secret detection
-- [Hadolint](https://github.com/hadolint/hadolint) - Dockerfile linter
-- [Kubesec](https://kubesec.io/) - K8s security scanner
-- [OPA Conftest](https://www.conftest.dev/) - Policy testing
+## Live demo
 
-**Platform:**
-- GitHub Actions (CI/CD)
-- Docker Hub (container registry)
-- Kubernetes (local: kind/minikube)
+[Visit Kubesec.io](https://kubesec.io)
 
-## 📁 Project Structure
-
-```
-secure-app/
-├── README.md
-├── .gitignore
-├── app/
-│   ├── package.json
-│   ├── server.js
-│   ├── Dockerfile
-│   └── Dockerfile.vulnerable
-├── k8s/
-│   ├── namespace.yaml
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   ├── networkpolicy.yaml
-│   └── rbac.yaml
-├── policies/
-│   ├── security-policy.rego
-│   └── dockerfile-policy.rego
-├── .github/
-│   └── workflows/
-│       ├── security-scan.yml
-│       ├── container-scan.yml
-│       └── k8s-deploy.yml
-└── security/
-    ├── trivy.yaml
-    ├── semgrep.yml
-    └── kubesec-scan.sh
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Git
-- Docker Desktop
-- GitHub account
-- Docker Hub account (free)
-- [kind](https://kind.sigs.k8s.io/docs/user/quick-start/) or [minikube](https://minikube.sigs.k8s.io/docs/start/) for local Kubernetes
-
-### 1. Repository Setup
-
-```bash
-# Fork or create new repository on GitHub
-git clone https://github.com/YOUR_USERNAME/secure-app.git
-cd secure-app
-
-# Create directory structure
-mkdir -p app k8s policies .github/workflows security
-
-# Copy all the files from this README into their respective directories
-```
-
-### 2. GitHub Configuration
-
-**Set up repository secrets:**
-1. Go to your repo → Settings → Secrets and variables → Actions
-2. Click "New repository secret"
-3. Add these secrets:
-   - `DOCKERHUB_USERNAME`: Your Docker Hub username
-   - `DOCKERHUB_TOKEN`: Create in Docker Hub → Account Settings → Security
-
-**Enable GitHub Actions:**
-- GitHub Actions will run automatically on push/PR once you commit the workflow files
-
-### 3. Local Development Setup
-
-```bash
-# Build and test locally
-cd app
-docker build -t secure-app:local -f Dockerfile .
-docker run -p 3000:3000 secure-app:local
-
-# Test the app
-curl http://localhost:3000
-curl http://localhost:3000/health
-```
-
-### 4. Deploy to Local Kubernetes
-
-```bash
-# Start kind cluster
-kind create cluster --name secure-app
-
-# Apply Kubernetes manifests
-kubectl apply -f k8s/
-
-# Port forward to access app
-kubectl port-forward -n secure-app service/secure-app-service 8080:80
-
-# Test
-curl http://localhost:8080
-```
-
-### 2. Create Sample Application
-
-**app/package.json:**
-```json
-{
-  "name": "secure-app",
-  "version": "1.0.0",
-  "description": "Sample app for DevSecOps learning",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "test": "echo \"No tests yet\" && exit 0"
-  },
-  "dependencies": {
-    "express": "^4.18.2"
-  }
-}
-```
-
-**app/server.js:**
-```javascript
-const express = require('express');
-const app = express();
-const port = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Hello from SecureApp!', 
-    version: '1.0.0',
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
-});
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server running on port ${port}`);
-});
-```
-
-### 3. Docker Configuration
-
-**app/Dockerfile (Secure Version):**
-```dockerfile
-# Use specific version and non-root base image
-FROM node:18-alpine3.17
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
-
-# Set working directory
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm ci --only=production && \
-    npm cache clean --force
-
-# Copy application code
-COPY --chown=nodejs:nodejs server.js ./
-
-# Switch to non-root user
-USER nodejs
-
-# Expose port
-EXPOSE 3000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
-
-# Start application
-CMD ["node", "server.js"]
-```
-
-**app/Dockerfile.vulnerable (For Learning):**
-```dockerfile
-# Intentionally vulnerable for learning purposes
-FROM node:16  # Outdated version
-
-# Run as root (bad practice)
-WORKDIR /app
-
-# Copy everything (including secrets)
-COPY . .
-
-# Install all dependencies including dev
-RUN npm install
-
-# Expose unnecessary ports
-EXPOSE 3000 22 5432
-
-# Hardcoded secrets (bad practice)
-ENV DATABASE_PASSWORD=supersecret123
-ENV API_KEY=sk-1234567890abcdef
-
-# Run as root
-CMD ["node", "server.js"]
-```
-
-### 4. Kubernetes Manifests
-
-**k8s/namespace.yaml:**
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: secure-app
-  labels:
-    name: secure-app
-    security.policy/enforce: "true"
-```
-
-**k8s/deployment.yaml:**
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: secure-app
-  namespace: secure-app
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: secure-app
-  template:
-    metadata:
-      labels:
-        app: secure-app
-    spec:
-      serviceAccountName: secure-app-sa
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1001
-        fsGroup: 1001
-      containers:
-      - name: secure-app
-        image: YOUR_DOCKERHUB_USERNAME/secure-app:latest
-        ports:
-        - containerPort: 3000
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 1001
-        resources:
-          limits:
-            cpu: 500m
-            memory: 512Mi
-          requests:
-            cpu: 100m
-            memory: 128Mi
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 5
-```
-
-### 5. GitHub Actions Workflows
-
-**.github/workflows/security-scan.yml:**
-```yaml
-name: Security Scan
-
-on:
-  pull_request:
-    branches: [ main ]
-  push:
-    branches: [ main ]
-
-jobs:
-  security-scan:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: Run Semgrep
-      uses: semgrep/semgrep-action@v1
-      with:
-        config: >-
-          p/security-audit
-          p/secrets
-          p/dockerfile
-        
-    - name: Run TruffleHog OSS
-      uses: trufflesecurity/trufflehog@main
-      with:
-        path: ./
-        base: main
-        head: HEAD
-        extra_args: --debug --only-verified
-        
-    - name: Run Trivy filesystem scan
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-        
-    - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v2
-      if: always()
-      with:
-        sarif_file: 'trivy-results.sarif'
-```
-
-**.github/workflows/container-scan.yml:**
-```yaml
-name: Container Security Scan
-
-on:
-  push:
-    branches: [ main ]
-    paths: 
-      - 'app/**'
-      - 'Dockerfile*'
-
-jobs:
-  container-security:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Build Docker image
-      run: |
-        cd app
-        docker build -t secure-app:${{ github.sha }} -f Dockerfile .
-        
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: 'secure-app:${{ github.sha }}'
-        format: 'table'
-        exit-code: '1'
-        ignore-unfixed: true
-        severity: 'CRITICAL,HIGH'
-        
-    - name: Run Hadolint Dockerfile linter
-      uses: hadolint/hadolint-action@v3.1.0
-      with:
-        dockerfile: app/Dockerfile
-        
-    - name: Build and push to Docker Hub (on success)
-      if: success()
-      uses: docker/build-push-action@v4
-      with:
-        context: ./app
-        push: true
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/secure-app:latest
-```
-
-### 6. Security Policies
-
-**policies/security-policy.rego:**
-```rego
-package kubernetes.admission
-
-deny[msg] {
-  input.request.kind.kind == "Pod"
-  input.request.object.spec.securityContext.runAsRoot == true
-  msg := "Containers must not run as root"
-}
-
-deny[msg] {
-  input.request.kind.kind == "Pod"
-  container := input.request.object.spec.containers[_]
-  not container.securityContext.readOnlyRootFilesystem
-  msg := "Containers must use read-only root filesystem"
-}
-```
-
-## 🔒 Security Features Demonstrated
-
-### Container Security
-- **Secure Base Images**: Uses specific, minimal Alpine images
-- **Non-root User**: Containers run as unprivileged user
-- **Read-only Filesystem**: Prevents runtime modifications
-- **Resource Limits**: CPU and memory constraints
-- **Health Checks**: Application health monitoring
-- **Vulnerability Scanning**: Automated with Trivy
-
-### Kubernetes Security
-- **RBAC**: Role-based access control with minimal permissions
-- **Network Policies**: Restricts pod-to-pod communication
-- **Pod Security**: Security contexts and standards
-- **Secret Management**: Proper handling of sensitive data
-- **Admission Controllers**: Policy enforcement at deployment
-
-### DevSecOps Pipeline
-- **Shift-Left Security**: Security checks in development phase
-- **Automated Scanning**: Every PR triggers security scans
-- **Policy as Code**: Infrastructure and security policies in Git
-- **Security Gates**: Fail builds on security violations
-- **Compliance Reporting**: Security scan results in GitHub
-
-## 🧪 Learning Exercises
-
-### Beginner (Week 1-2)
-- [ ] Compare `Dockerfile` vs `Dockerfile.vulnerable`
-- [ ] Run Trivy scan locally: `trivy image secure-app:local`
-- [ ] Trigger GitHub Actions and review security reports
-- [ ] Fix a vulnerability found by Trivy
-- [ ] Add a secret to code and see TruffleHog catch it
-
-### Intermediate (Week 3-4)
-- [ ] Deploy to local Kubernetes cluster
-- [ ] Test network policies with `kubectl exec`
-- [ ] Create custom OPA policies in `policies/`
-- [ ] Add resource quotas and limit ranges
-- [ ] Implement Pod Security Standards
-
-### Advanced (Week 5-6)
-- [ ] Add Falco for runtime security monitoring
-- [ ] Implement GitOps with ArgoCD
-- [ ] Create custom admission controller
-- [ ] Add compliance scanning (CIS benchmarks)
-- [ ] Set up security dashboards with Grafana
-
-## 📊 Security Dashboards
-
-The project includes automated security reporting:
-
-- **GitHub Security Tab**: Vulnerability alerts and code scanning results
-- **Actions Summary**: Build and security scan status
-- **Pull Request Checks**: Automated security reviews
-- **Container Registry**: Vulnerability reports for images
-
-## 🔧 Local Security Testing
-
-```bash
-# Run security scans locally
-./security/kubesec-scan.sh
-trivy config k8s/
-semgrep --config=auto app/
-hadolint app/Dockerfile
-
-# Test policies with Conftest
-conftest test k8s/deployment.yaml --policy policies/
-```
-
-## Setup Instructions
-
-1. **Create GitHub Repository:**
-   - Create new repo called `secure-app`
-   - Clone locally and create the directory structure above
-
-2. **Configure GitHub Secrets:**
-   - Go to Settings > Secrets and Variables > Actions
-   - Add: `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`
-
-3. **Set up Docker Hub:**
-   - Create free Docker Hub account
-   - Create access token for GitHub Actions
-
-4. **Local Development:**
-   - Install Docker and kind/minikube
-   - Use Cursor with recommended extensions:
-     - Docker
-     - Kubernetes
-     - YAML
-     - GitLens
-
-## 📚 Learning Resources
-
-### Documentation
-- [Trivy Documentation](https://trivy.dev/)
-- [Semgrep Rules Explorer](https://semgrep.dev/explore)
-- [Kubernetes Security Best Practices](https://kubernetes.io/docs/concepts/security/)
-- [OWASP Container Security Guide](https://owasp.org/www-project-container-security/)
-- [CIS Kubernetes Benchmark](https://www.cisecurity.org/benchmark/kubernetes)
-
-### Security Standards
-- [NIST Container Security Guide](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-190.pdf)
-- [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
-- [Docker Security Best Practices](https://docs.docker.com/develop/security-best-practices/)
-
-### Tools Documentation
-- [OPA Policy Language](https://www.openpolicyagent.org/docs/latest/policy-language/)
-- [Falco Rules](https://falco.org/docs/rules/)
-- [GitHub Actions Security](https://docs.github.com/en/actions/security-guides)
-
-## 🤝 Contributing
-
-This is a learning project - feel free to:
-- Add more security scenarios
-- Improve the policies
-- Add new tools integration
-- Share your learning experiences
-- Report issues or suggest improvements
-
-## 🆘 Troubleshooting
-
-**GitHub Actions failing?**
-- Check you've added the required secrets
-- Verify Docker Hub token has push permissions
-- Review the Actions logs for specific errors
-
-**Kubernetes deployment issues?**
-- Ensure your cluster is running: `kubectl cluster-info`
-- Check pod status: `kubectl get pods -n secure-app`
-- View logs: `kubectl logs -n secure-app deployment/secure-app`
-
-**Security scans finding issues?**
-- This is expected! Use them as learning opportunities
-- Compare secure vs vulnerable examples
-- Check the tool documentation for remediation guidance
-
-## 📄 License
-
-MIT License - feel free to use this for learning and teaching!
+This uses ControlPlane's hosted API at [v2.kubesec.io/scan](https://v2.kubesec.io/scan)
 
 ---
 
-**🎯 Goal**: By the end of this project, you'll understand how to build secure containerized applications with automated security testing and Kubernetes hardening. Perfect for your DevSecOps portfolio!
+- [Download Kubesec](#download-kubesec)
+  - [Command line usage](#command-line-usage)
+  - [Usage example](#usage-example)
+  - [Docker usage](#docker-usage)
+- [Kubesec HTTP Server](#kubesec-http-server)
+  - [CLI usage example](#cli-usage-example)
+  - [Docker usage example](#docker-usage-example)
+- [Kubesec-as-a-Service](#kubesec-as-a-service)
+  - [Command line usage](#command-line-usage-1)
+  - [Usage example](#usage-example-1)
+- [Example output](#example-output)
+- [Contributors](#contributors)
+- [Getting Help](#getting-help)
+- [Contributing](/CONTRIBUTING.md)
+- [Changelog](/CHANGELOG.md)
+
+
+## Download Kubesec
+
+Kubesec is available as a:
+
+- [Docker container image](https://hub.docker.com/r/kubesec/kubesec/tags) at `docker.io/kubesec/kubesec:v2`
+- Linux/MacOS/Win binary (get the [latest release](https://github.com/controlplaneio/kubesec/releases))
+- [Kubernetes Admission Controller](https://github.com/controlplaneio/kubesec-webhook)
+- [Kubectl plugin](https://github.com/controlplaneio/kubectl-kubesec)
+
+Or install the latest commit from GitHub with:
+
+#### Go 1.16+
+
+```bash
+$ go install github.com/controlplaneio/kubesec/v2@latest
+```
+
+#### Go version < 1.16
+
+```bash
+$ GO111MODULE="on" go get github.com/controlplaneio/kubesec/v2
+```
+
+#### Command line usage:
+
+```bash
+$ kubesec scan k8s-deployment.yaml
+```
+
+#### Usage example:
+
+```bash
+$ cat <<EOF > kubesec-test.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kubesec-demo
+spec:
+  containers:
+  - name: kubesec-demo
+    image: gcr.io/google-samples/node-hello:1.0
+    securityContext:
+      readOnlyRootFilesystem: true
+EOF
+$ kubesec scan kubesec-test.yaml
+```
+
+#### Docker usage:
+
+Run the same command in Docker:
+
+```bash
+$ docker run -i kubesec/kubesec:v2 scan /dev/stdin < kubesec-test.yaml
+```
+
+## Kubesec HTTP Server
+
+Kubesec includes a bundled HTTP server
+
+#### CLI usage example:
+
+Start the HTTP server in the background
+
+<!-- markdownlint-disable line-length -->
+
+```bash
+$ kubesec http 8080 &
+[1] 12345
+{"severity":"info","timestamp":"2019-05-12T11:58:34.662+0100","caller":"server/server.go:69","message":"Starting HTTP server on port 8080"}
+```
+
+<!-- markdownlint-enable line-length -->
+
+Use curl to POST a file to the server
+
+```bash
+$ curl -sSX POST --data-binary @test/asset/score-0-cap-sys-admin.yml http://localhost:8080/scan
+[
+  {
+    "object": "Pod/security-context-demo.default",
+    "valid": true,
+    "message": "Failed with a score of -30 points",
+    "score": -30,
+    "scoring": {
+      "critical": [
+        {
+          "selector": "containers[] .securityContext .capabilities .add == SYS_ADMIN",
+          "reason": "CAP_SYS_ADMIN is the most privileged capability and should always be avoided",
+          "points": -30
+        },
+        {
+          "selector": "containers[] .securityContext .runAsNonRoot == true",
+          "reason": "Force the running image to run as a non-root user to ensure least privilege",
+          "points": 1
+        },
+  // ...
+```
+
+Finally, stop the Kubesec server by killing the background process
+
+```bash
+$ kill %
+```
+
+#### Docker usage example:
+
+Start the HTTP server using Docker
+
+```bash
+$ docker run -d -p 8080:8080 kubesec/kubesec:v2 http 8080
+```
+
+Use curl to POST a file to the server
+
+```bash
+$ curl -sSX POST --data-binary @test/asset/score-0-cap-sys-admin.yml http://localhost:8080/scan
+...
+```
+
+Don't forget to stop the server.
+
+## Kubesec-as-a-Service
+
+Kubesec is also available via HTTPS at [v2.kubesec.io/scan](https://v2.kubesec.io/scan)
+
+Please do not submit sensitive YAML to this service.
+
+The service is ran on a good faith best effort basis.
+
+#### Command line usage:
+
+```bash
+$ curl -sSX POST --data-binary @"k8s-deployment.yaml" https://v2.kubesec.io/scan
+```
+
+#### Usage example:
+
+Define a BASH function
+
+```bash
+$ kubesec ()
+{
+    local FILE="${1:-}";
+    [[ ! -e "${FILE}" ]] && {
+        echo "kubesec: ${FILE}: No such file" >&2;
+        return 1
+    };
+    curl --silent \
+      --compressed \
+      --connect-timeout 5 \
+      -sSX POST \
+      --data-binary=@"${FILE}" \
+      https://v2.kubesec.io/scan
+}
+```
+
+POST a Kubernetes resource to v2.kubesec.io/scan
+
+```bash
+$ kubesec ./deployment.yml
+```
+
+Return non-zero status code is the score is not greater than 10
+
+```bash
+$ kubesec ./score-9-deployment.yml | jq --exit-status '.score > 10' >/dev/null
+# status code 1
+```
+
+## Example output
+
+Kubesec returns a returns a JSON array, and can scan multiple YAML documents in a single input file.
+
+```json
+[
+  {
+    "object": "Pod/security-context-demo.default",
+    "valid": true,
+    "message": "Failed with a score of -30 points",
+    "score": -30,
+    "scoring": {
+      "critical": [
+        {
+          "selector": "containers[] .securityContext .capabilities .add == SYS_ADMIN",
+          "reason": "CAP_SYS_ADMIN is the most privileged capability and should always be avoided",
+          "points": -30
+        }
+      ],
+      "advise": [
+        {
+          "selector": "containers[] .securityContext .runAsNonRoot == true",
+          "reason": "Force the running image to run as a non-root user to ensure least privilege",
+          "points": 1
+        },
+        {
+          // ...
+        }
+      ]
+    }
+  }
+]
+```
+
+---
+
+## Contributors
+
+Thanks to our awesome contributors!
+
+- [Andrew Martin](@sublimino)
+- [Stefan Prodan](@stefanprodan)
+- [Jack Kelly](@06kellyjac)
+
+## Getting Help
+
+If you have any questions about Kubesec and Kubernetes security:
+
+- Read the Kubesec docs
+- Reach out on Twitter to [@sublimino](https://twitter.com/sublimino) or [@controlplaneio](https://twitter.com/controlplaneio)
+- File an issue
+
+Your feedback is always welcome!
+
+[testing_workflow]: https://github.com/controlplaneio/kubesec/actions?query=workflow%3ATesting
+[testing_workflow_badge]: https://github.com/controlplaneio/kubesec/workflows/Testing/badge.svg
+
+[security_workflow]: https://github.com/controlplaneio/kubesec/actions?query=workflow%3A%22Security+Analysis%22
+[security_workflow_badge]: https://github.com/controlplaneio/kubesec/workflows/Security%20Analysis/badge.svg
+
+[release_workflow]: https://github.com/controlplaneio/kubesec/actions?query=workflow%3ARelease
+[release_workflow_badge]: https://github.com/controlplaneio/kubesec/workflows/Release/badge.svg
+
+[goreportcard]: https://goreportcard.com/report/github.com/controlplaneio/kubesec
+[goreportcard_badge]: https://goreportcard.com/badge/github.com/controlplaneio/kubesec
+
+[go_dev]: https://pkg.go.dev/github.com/controlplaneio/kubesec/v2
+[go_dev_badge]: https://pkg.go.dev/badge/github.com/controlplaneio/kubesec/v2
