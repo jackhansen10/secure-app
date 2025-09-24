@@ -1,0 +1,21 @@
+# Intentionally vulnerable for learning purposes
+FROM node:16  # Outdated version
+
+# Run as root (bad practice)
+WORKDIR /app
+
+# Copy everything (including secrets)
+COPY . .
+
+# Install all dependencies including dev
+RUN npm install
+
+# Expose unnecessary ports
+EXPOSE 3000 22 5432
+
+# Hardcoded secrets (bad practice)
+ENV DATABASE_PASSWORD=supersecret123
+ENV API_KEY=sk-1234567890abcdef
+
+# Run as root
+CMD ["node", "server.js"]
