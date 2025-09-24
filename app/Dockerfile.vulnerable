@@ -1,5 +1,6 @@
 # Intentionally vulnerable for learning purposes
-FROM node:16  # Outdated version
+# Outdated version
+FROM node:16
 
 # Run as root (bad practice)
 WORKDIR /app
