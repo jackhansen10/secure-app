@@ -37,12 +37,19 @@ jobs:
           echo "---"
         done
         
+    - name: Install Conftest
+      run: |
+        curl -sSfL https://github.com/open-policy-agent/conftest/releases/download/v0.50.0/conftest_0.50.0_Linux_x86_64.tar.gz | tar -xz
+        sudo mv conftest /usr/local/bin/
+        conftest version
+        
     - name: Run Conftest on Kubernetes manifests
-      uses: instrumenta/conftest-action@master
-      with:
-        files: k8s/
-        policy: policies/
-        output: stdout
+      run: |
+        echo "Running Conftest policy validation..."
+        conftest test k8s/ --policy policies/ --output table
+        echo "---"
+        echo "Conftest JSON output:"
+        conftest test k8s/ --policy policies/ --output json || true
         
     - name: Generate Kubesec SARIF report
       run: |
@@ -86,7 +93,8 @@ jobs:
           comment += '### Kubesec Analysis\n';
           comment += 'Kubernetes manifests have been scanned for security best practices.\n\n';
           comment += '### Conftest Policy Validation\n';
-          comment += 'OPA policies have been validated against Kubernetes configurations.\n\n';
+          comment += 'OPA policies have been validated against Kubernetes configurations.\n';
+          comment += 'Policies checked: resource limits, security contexts, probes, service accounts.\n\n';
           comment += '✅ **Security scan completed successfully**\n';
           
           github.rest.issues.createComment({
