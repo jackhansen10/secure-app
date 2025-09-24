@@ -23,14 +23,14 @@ spec:
         image: YOUR_DOCKERHUB_USERNAME/secure-app:latest
         ports:
         - containerPort: 3000
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 1001
+        # securityContext:
+        #   allowPrivilegeEscalation: false
+        #   capabilities:
+        #     drop:
+        #     - ALL
+        #   readOnlyRootFilesystem: true
+        #   runAsNonRoot: true
+        #   runAsUser: 1001
         resources:
           limits:
             cpu: 500m
