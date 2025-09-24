@@ -103,7 +103,10 @@ This repository serves as a **hands-on learning platform** for understanding:
 
 ### Container Security
 ```bash
-# Install Trivy
+# Install Trivy (macOS)
+brew install trivy
+
+# Or install via script
 curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
 
 # Scan container images
@@ -115,16 +118,22 @@ trivy image vulnerable-app:latest
 
 ### Kubernetes Security
 ```bash
-# Install Kubesec
+# Install Kubesec (macOS)
 curl -sSfL https://github.com/controlplaneio/kubesec/releases/download/v2.11.5/kubesec_darwin_amd64.tar.gz | tar -xz
 
 # Scan K8s manifests
 ./kubesec scan k8s/deployment.yaml
+
+# Clean up
+rm kubesec
 ```
 
 ### Static Analysis
 ```bash
-# Install Semgrep
+# Install Semgrep (macOS)
+brew install semgrep
+
+# Or install via pip
 pip install semgrep
 
 # Run security rules
