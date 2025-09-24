@@ -12,7 +12,7 @@ COPY . .
 RUN npm install
 
 # Expose unnecessary ports
-EXPOSE 3000 22 5432
+EXPOSE 3000 22 5432 80
 
 # Hardcoded secrets (bad practice)
 ENV DATABASE_PASSWORD=supersecret123
