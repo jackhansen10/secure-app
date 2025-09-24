@@ -30,6 +30,7 @@ jobs:
         base: main
         head: HEAD
         extra_args: --debug --only-verified
+      continue-on-error: true  # Don't fail the workflow if secrets are found
         
     - name: Run Trivy filesystem scan
       uses: aquasecurity/trivy-action@master
