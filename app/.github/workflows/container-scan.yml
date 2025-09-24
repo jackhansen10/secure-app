@@ -1,0 +1,46 @@
+name: Container Security Scan
+
+on:
+  push:
+    branches: [ main ]
+    paths: 
+      - 'app/**'
+      - 'Dockerfile*'
+
+jobs:
+  container-security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Build secure Docker image
+      run: |
+        docker build -t secure-app:${{ github.sha }} -f Dockerfile .
+        
+    - name: Run Trivy vulnerability scanner on secure image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'secure-app:${{ github.sha }}'
+        format: 'table'
+        exit-code: '0'
+        ignore-unfixed: true
+        severity: 'CRITICAL,HIGH'
+        
+    - name: Run Hadolint Dockerfile linter
+      uses: hadolint/hadolint-action@v3.1.0
+      with:
+        dockerfile: Dockerfile
+        
+    - name: Build vulnerable image for demonstration
+      run: |
+        docker build -t secure-app-vulnerable:${{ github.sha }} -f Dockerfile.vulnerable .
+        
+    - name: Run Trivy on vulnerable image (expected to find issues)
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'secure-app-vulnerable:${{ github.sha }}'
+        format: 'table'
+        exit-code: '0'
+        ignore-unfixed: false
+        severity: 'CRITICAL,HIGH,MEDIUM'
