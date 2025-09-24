@@ -20,10 +20,20 @@ const commands = {
 app.get('/', (req, res) => {
   res.json({ 
     message: 'SecureApp Command API', 
-    version: '2.0.0',
+    version: '2.1.0',
     environment: process.env.NODE_ENV || 'development',
     availableCommands: Object.keys(commands),
-    usage: 'GET /command/{command-name} or POST /command with {"command": "command-name"}'
+    usage: 'GET /command/{command-name} or POST /command with {"command": "command-name"}',
+    formats: {
+      json: 'Default JSON format',
+      text: 'Plain text format: ?format=text',
+      html: 'HTML format: ?format=html'
+    },
+    examples: [
+      'curl http://localhost:3000/command/is-secure',
+      'curl http://localhost:3000/command/is-secure?format=text',
+      'curl http://localhost:3000/command/is-secure?format=html'
+    ]
   });
 });
 
@@ -35,13 +45,34 @@ app.get('/health', (req, res) => {
 app.get('/command/:cmd', (req, res) => {
   const command = req.params.cmd;
   const response = commands[command];
+  const format = req.query.format || 'json';
   
   if (response) {
-    res.json({ 
-      command: command, 
-      response: response,
-      timestamp: new Date().toISOString()
-    });
+    if (format === 'text' || format === 'plain') {
+      res.set('Content-Type', 'text/plain');
+      res.send(`${command}: ${response}`);
+    } else if (format === 'html') {
+      res.set('Content-Type', 'text/html');
+      const color = response === 'yes' ? 'green' : 'red';
+      res.send(`
+        <html>
+          <body style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2>SecureApp Command Response</h2>
+            <p><strong>Command:</strong> ${command}</p>
+            <p><strong>Response:</strong> <span style="color: ${color}; font-weight: bold;">${response}</span></p>
+            <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+            <hr>
+            <p><a href="/commands">View all commands</a></p>
+          </body>
+        </html>
+      `);
+    } else {
+      res.json({ 
+        command: command, 
+        response: response,
+        timestamp: new Date().toISOString()
+      });
+    }
   } else {
     res.status(404).json({ 
       error: 'Command not found', 
